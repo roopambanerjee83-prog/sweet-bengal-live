@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sweet Bengal — Email Creator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Lato:wght@300;400;700&family=Great+Vibes&display=swap" rel="stylesheet">
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<style>
+:root{--red:#B31B1B;--red-dark:#7A0C0C;--gold:#D4A017;--gold-lt:#F0C040;--cream:#FDF6EC;--bg:#150800;--panel:#1e0d02;--card:#2a1506;--border:rgba(212,160,23,.25);--txt:#FDF6EC;--txt-dim:#b89060;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Lato',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;display:flex;flex-direction:column;}
+
+/* HEADER */
+header{background:linear-gradient(135deg,var(--red-dark),var(--red));border-bottom:2px solid var(--gold);padding:12px 32px;display:flex;align-items:center;gap:18px;box-shadow:0 4px 24px rgba(0,0,0,.5);}
+.logo-box{background:var(--red);border:2px solid var(--gold);border-radius:6px;padding:6px 18px;font-family:'Great Vibes',cursive;font-size:28px;color:#fff;letter-spacing:1px;white-space:nowrap;text-shadow:1px 1px 4px rgba(0,0,0,.4);}
+header h1{font-family:'Playfair Display',serif;font-size:20px;color:var(--gold-lt);letter-spacing:2px;font-weight:600;}
+header p{font-size:12px;color:rgba(255,255,255,.6);letter-spacing:1px;}
+
+/* LAYOUT */
+.app{display:grid;grid-template-columns:480px 1fr;gap:0;flex:1;height:calc(100vh - 68px);}
+
+/* EDITOR PANEL */
+.editor{background:var(--panel);border-right:1px solid var(--border);overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:16px;}
+.editor::-webkit-scrollbar{width:4px;}.editor::-webkit-scrollbar-thumb{background:var(--gold);border-radius:4px;}
+
+.section-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;font-weight:700;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.card input,.card textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--txt);font-family:'Lato',sans-serif;font-size:14px;outline:none;transition:.2s;}
+.card input:focus,.card textarea:focus{border-color:var(--gold);background:rgba(212,160,23,.08);}
+.card input::placeholder,.card textarea::placeholder{color:var(--txt-dim);}
+
+/* Quill overrides */
+.ql-toolbar.ql-snow{background:#2a1506;border:1px solid var(--border)!important;border-radius:8px 8px 0 0;padding:6px;}
+.ql-container.ql-snow{background:rgba(255,255,255,.04);border:1px solid var(--border)!important;border-top:none;border-radius:0 0 8px 8px;min-height:200px;color:var(--txt);font-size:15px;}
+.ql-toolbar button svg .ql-stroke{stroke:#b89060!important;}.ql-toolbar button:hover svg .ql-stroke{stroke:var(--gold-lt)!important;}
+.ql-toolbar .ql-picker-label{color:#b89060!important;}
+.ql-snow .ql-picker-options{background:#2a1506!important;border-color:var(--border)!important;}
+.ql-snow .ql-picker-item{color:var(--txt)!important;}
+.ql-editor.ql-blank::before{color:var(--txt-dim)!important;font-style:italic;}
+
+/* Banner Grid */
+.banner-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;}
+.banner-thumb{border-radius:6px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:.2s;aspect-ratio:16/9;position:relative;}
+.banner-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.banner-thumb.active{border-color:var(--gold);box-shadow:0 0 12px rgba(212,160,23,.5);}
+.banner-thumb:hover{border-color:rgba(212,160,23,.5);}
+.banner-thumb .label{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);font-size:9px;padding:3px 5px;color:#fff;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.custom-upload{border:1px dashed var(--border);border-radius:6px;padding:10px;text-align:center;cursor:pointer;font-size:12px;color:var(--txt-dim);transition:.2s;}
+.custom-upload:hover{border-color:var(--gold);color:var(--gold);}
+#customImageInput{display:none;}
+
+/* CTA */
+.cta-block{display:flex;flex-direction:column;gap:8px;padding:12px;background:rgba(212,160,23,.06);border:1px solid var(--border);border-radius:8px;}
+.cta-block input{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:6px;padding:9px 13px;color:var(--txt);font-size:13px;outline:none;width:100%;transition:.2s;}
+.cta-block input:focus{border-color:var(--gold);}
+.cta-block input::placeholder{color:var(--txt-dim);}
+.cta2-toggle{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt-dim);cursor:pointer;}
+.cta2-toggle input{width:auto;cursor:pointer;}
+
+/* Action Buttons */
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.btn{padding:12px;border-radius:8px;border:none;cursor:pointer;font-family:'Lato',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;transition:.2s;text-transform:uppercase;}
+.btn-primary{background:linear-gradient(135deg,var(--red),var(--red-dark));color:#fff;border:1px solid rgba(255,255,255,.1);}
+.btn-primary:hover{background:linear-gradient(135deg,#d42020,var(--red));transform:translateY(-1px);}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-lt));color:#1a0800;border:none;}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(212,160,23,.4);}
+.btn-outline{background:transparent;color:var(--gold);border:1px solid var(--gold);}
+.btn-outline:hover{background:rgba(212,160,23,.1);}
+
+/* PREVIEW PANEL */
+.preview{background:#1a1a1a;display:flex;flex-direction:column;overflow:hidden;}
+.preview-bar{background:#111;border-bottom:1px solid #333;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;}
+.preview-bar span{font-size:12px;color:#888;letter-spacing:1px;text-transform:uppercase;}
+.toggle-btns{display:flex;gap:4px;background:#222;border-radius:6px;padding:3px;}
+.toggle-btns button{background:none;border:none;color:#888;padding:5px 14px;border-radius:4px;cursor:pointer;font-size:12px;transition:.2s;}
+.toggle-btns button.active{background:var(--gold);color:#1a0800;font-weight:700;}
+.preview-wrap{flex:1;overflow-y:auto;display:flex;justify-content:center;padding:24px;background:#222;}
+#previewFrame{background:#fff;width:100%;max-width:640px;border-radius:4px;overflow:hidden;box-shadow:0 8px 48px rgba(0,0,0,.6);transition:max-width .3s;font-family:Arial,sans-serif;}
+#previewFrame.mobile{max-width:390px;}
+
+/* Email template parts */
+.em-header{background:var(--red);padding:20px;text-align:center;border-bottom:3px solid var(--gold);}
+.em-logo{display:inline-block;font-family:'Great Vibes',cursive;font-size:36px;color:#fff;padding:8px 24px;border:2px solid var(--gold);border-radius:4px;}
+.em-banner{width:100%;display:block;max-height:280px;object-fit:cover;}
+.em-body{padding:32px 40px;background:#fff;color:#333;font-family:Arial,sans-serif;line-height:1.7;font-size:15px;}
+.em-cta-wrap{padding:24px 40px;background:#fdf6ec;text-align:center;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+.em-cta{display:inline-block;padding:14px 36px;background:var(--red);color:#fff!important;text-decoration:none;border-radius:4px;font-weight:700;font-size:14px;letter-spacing:1px;border:2px solid transparent;}
+.em-cta.gold{background:var(--gold);color:#1a0800!important;}
+.em-footer{background:#2a1506;color:#b89060;text-align:center;padding:20px 32px;font-size:12px;line-height:1.8;}
+.em-footer a{color:var(--gold);text-decoration:none;}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:#2a1506;border:1px solid var(--gold);color:var(--gold-lt);padding:12px 24px;border-radius:8px;font-size:13px;opacity:0;transition:.3s;pointer-events:none;z-index:999;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-box">Sweet Bengal</div>
+  <div>
+    <h1>EMAIL CREATOR</h1>
+    <p>Marketing Emailer Builder &nbsp;·&nbsp; Sent from 19</p>
+  </div>
+</header>
+
+<div class="app">
+<!-- ═══ EDITOR PANEL ═══ -->
+<div class="editor">
+
+  <!-- BOX 1: Emailer Name -->
+  <div class="card">
+    <div class="section-label">📋 Box 1 — Emailer Name (Internal)</div>
+    <input type="text" id="emailerName" placeholder="e.g. Diwali Campaign 2025">
+  </div>
+
+  <!-- BOX 2: Subject Line -->
+  <div class="card">
+    <div class="section-label">✉️ Box 2 — Email Subject Line</div>
+    <input type="text" id="subjectLine" placeholder="e.g. 🎁 Sweeten your Diwali with Sweet Bengal!">
+  </div>
+
+  <!-- BOX 3: Rich Text Body -->
+  <div class="card">
+    <div class="section-label">📝 Box 3 — Email Body (Rich Text)</div>
+    <div id="quillEditor"></div>
+  </div>
+
+  <!-- BANNER SELECTOR -->
+  <div class="card">
+    <div class="section-label">🖼️ Banner Image — Choose or Upload</div>
+    <div class="banner-grid" id="bannerGrid"></div>
+    <div style="margin-top:8px;">
+      <div class="custom-upload" onclick="document.getElementById('customImageInput').click()">
+        ＋ Upload Custom Banner
+      </div>
+      <input type="file" id="customImageInput" accept="image/*">
+    </div>
+  </div>
+
+  <!-- CTA SECTION -->
+  <div class="card">
+    <div class="section-label">🔘 CTA Button 1</div>
+    <div class="cta-block">
+      <input type="text" id="cta1Text" placeholder="Button label  e.g. Shop Now">
+      <input type="text" id="cta1Url" placeholder="Link URL  e.g. https://sweetbengal.co.in">
+    </div>
+
+    <div style="margin-top:12px;">
+      <label class="cta2-toggle">
+        <input type="checkbox" id="cta2Toggle" onchange="toggleCta2()">
+        Add a second CTA button
+      </label>
+    </div>
+
+    <div id="cta2Block" style="display:none;margin-top:12px;">
+      <div class="section-label">🔘 CTA Button 2</div>
+      <div class="cta-block">
+        <input type="text" id="cta2Text" placeholder="Button label  e.g. Explore Gift Boxes">
+        <input type="text" id="cta2Url" placeholder="Link URL">
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="actions">
+    <button class="btn btn-gold" onclick="copyHTML()">📋 Copy HTML</button>
+    <button class="btn btn-primary" onclick="downloadHTML()">⬇️ Download HTML</button>
+  </div>
+  <button class="btn btn-outline" style="width:100%" onclick="sendTest()">🚀 Send Test Email</button>
+
+</div><!-- /editor -->
+
+<!-- ═══ PREVIEW PANEL ═══ -->
+<div class="preview">
+  <div class="preview-bar">
+    <span>Live Preview</span>
+    <div class="toggle-btns">
+      <button id="btnDesktop" class="active" onclick="setView('desktop')">🖥 Desktop</button>
+      <button id="btnMobile" onclick="setView('mobile')">📱 Mobile</button>
+    </div>
+  </div>
+  <div class="preview-wrap">
+    <div id="previewFrame">
+      <div class="em-header">
+        <div class="em-logo">Sweet Bengal</div>
+      </div>
+      <img id="prevBanner" class="em-banner" src="images/banner_rosogolla.png" alt="Banner">
+      <div class="em-body" id="prevBody">
+        <p style="color:#999;font-style:italic;">Your email body will appear here as you type...</p>
+      </div>
+      <div class="em-cta-wrap" id="prevCtas"></div>
+      <div class="em-footer">
+        <p><strong style="color:var(--gold-lt)">Sweet Bengal</strong></p>
+        <p>By Speciality Restaurants Ltd. &nbsp;|&nbsp; <a href="tel:+918655679525">+91 86556 79525</a></p>
+        <p style="margin-top:8px;font-size:11px;color:#7a5030;">
+          You received this because you're a valued Sweet Bengal customer.<br>
+          <a href="#">Unsubscribe</a> &nbsp;|&nbsp; <a href="https://sweetbengal.co.in">Visit Website</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script>
+// ─── BANNER DATA ───────────────────────────────────────────────
+const banners = [
+  {src:'images/banner_rosogolla.png',  label:'Rosogolla'},
+  {src:'images/banner_mishti_doi.png', label:'Mishti Doi'},
+  {src:'images/banner_sandesh.png',    label:'Sandesh'},
+  {src:'images/banner_diwali_gift.png',label:'Diwali Gift'},
+  {src:'images/banner_puja_gift.png',  label:'Durga Puja'},
+  {src:'images/banner_banana_leaf.png',label:'Banana Leaf'},
+  {src:'https://images.unsplash.com/photo-1567337710282-00832b415979?w=900&auto=format&fit=crop',label:'Sweets & Flowers'},
+  {src:'https://images.unsplash.com/photo-1607344645866-009c320b63e0?w=900&auto=format&fit=crop',label:'Gift Packaging'},
+  {src:'https://images.unsplash.com/photo-1481487196290-c152efe083f5?w=900&auto=format&fit=crop',label:'Heritage Ambiance'},
+  {src:'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=900&auto=format&fit=crop',label:'Celebration'},
+];
+
+let activeBanner = banners[0].src;
+
+// Build banner grid
+const grid = document.getElementById('bannerGrid');
+banners.forEach((b,i) => {
+  const d = document.createElement('div');
+  d.className = 'banner-thumb' + (i===0?' active':'');
+  d.dataset.src = b.src;
+  d.innerHTML = `<img src="${b.src}" alt="${b.label}" loading="lazy"><div class="label">${b.label}</div>`;
+  d.onclick = () => selectBanner(b.src, d);
+  grid.appendChild(d);
+});
+
+function selectBanner(src, el) {
+  document.querySelectorAll('.banner-thumb').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  activeBanner = src;
+  document.getElementById('prevBanner').src = src;
+}
+
+// Custom image upload
+document.getElementById('customImageInput').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const d = document.createElement('div');
+  d.className = 'banner-thumb active';
+  d.dataset.src = url;
+  d.innerHTML = `<img src="${url}" alt="Custom"><div class="label">Custom</div>`;
+  d.onclick = () => selectBanner(url, d);
+  document.querySelectorAll('.banner-thumb').forEach(t => t.classList.remove('active'));
+  grid.appendChild(d);
+  activeBanner = url;
+  document.getElementById('prevBanner').src = url;
+});
+
+// ─── QUILL EDITOR ──────────────────────────────────────────────
+const quill = new Quill('#quillEditor', {
+  theme: 'snow',
+  placeholder: 'Write your email body here... (Bold, colours, links, images all supported)',
+  modules: {
+    toolbar: [
+      [{ header: [1,2,3,false] }],
+      ['bold','italic','underline','strike'],
+      [{ color: [] },{ background: [] }],
+      [{ font: [] },{ size: ['small',false,'large','huge'] }],
+      [{ align: [] }],
+      [{ list: 'ordered' },{ list: 'bullet' }],
+      ['link','image'],
+      ['clean']
+    ]
+  }
+});
+
+quill.on('text-change', updatePreview);
+['emailerName','subjectLine','cta1Text','cta1Url','cta2Text','cta2Url'].forEach(id => {
+  const el = document.getElementById(id);
+  if(el) el.addEventListener('input', updatePreview);
+});
+
+// ─── PREVIEW ───────────────────────────────────────────────────
+function updatePreview() {
+  const body = quill.root.innerHTML;
+  document.getElementById('prevBody').innerHTML = body;
+
+  const ctaWrap = document.getElementById('prevCtas');
+  ctaWrap.innerHTML = '';
+  const t1 = document.getElementById('cta1Text').value.trim();
+  const u1 = document.getElementById('cta1Url').value.trim() || '#';
+  if(t1) {
+    const a = document.createElement('a');
+    a.href = u1; a.className = 'em-cta'; a.textContent = t1; a.target='_blank';
+    ctaWrap.appendChild(a);
+  }
+  if(document.getElementById('cta2Toggle').checked) {
+    const t2 = document.getElementById('cta2Text').value.trim();
+    const u2 = document.getElementById('cta2Url').value.trim() || '#';
+    if(t2) {
+      const a2 = document.createElement('a');
+      a2.href = u2; a2.className = 'em-cta gold'; a2.textContent = t2; a2.target='_blank';
+      ctaWrap.appendChild(a2);
+    }
+  }
+}
+
+function toggleCta2() {
+  const show = document.getElementById('cta2Toggle').checked;
+  document.getElementById('cta2Block').style.display = show ? 'block' : 'none';
+  updatePreview();
+}
+
+// ─── VIEW TOGGLE ───────────────────────────────────────────────
+function setView(mode) {
+  const frame = document.getElementById('previewFrame');
+  frame.classList.toggle('mobile', mode === 'mobile');
+  document.getElementById('btnDesktop').classList.toggle('active', mode === 'desktop');
+  document.getElementById('btnMobile').classList.toggle('active', mode === 'mobile');
+}
+
+// ─── GENERATE HTML ─────────────────────────────────────────────
+function buildEmailHTML() {
+  const subject  = document.getElementById('subjectLine').value || 'Sweet Bengal';
+  const body     = quill.root.innerHTML;
+  const t1 = document.getElementById('cta1Text').value.trim();
+  const u1 = document.getElementById('cta1Url').value.trim() || '#';
+  const t2 = document.getElementById('cta2Text').value.trim();
+  const u2 = document.getElementById('cta2Url').value.trim() || '#';
+  const hasCta2 = document.getElementById('cta2Toggle').checked && t2;
+
+  const ctas = `
+    ${t1 ? `<a href="${u1}" style="display:inline-block;padding:14px 36px;background:#B31B1B;color:#ffffff;text-decoration:none;border-radius:4px;font-weight:700;font-size:14px;letter-spacing:1px;margin:6px;">${t1}</a>` : ''}
+    ${hasCta2 ? `<a href="${u2}" style="display:inline-block;padding:14px 36px;background:#D4A017;color:#1a0800;text-decoration:none;border-radius:4px;font-weight:700;font-size:14px;letter-spacing:1px;margin:6px;">${t2}</a>` : ''}
+  `;
+
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${subject}</title>
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background:#f0e8d8;font-family:Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#f0e8d8">
+<tr><td align="center" style="padding:24px 12px;">
+<table width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;background:#ffffff;border-radius:4px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.15);">
+  <tr><td style="background:#B31B1B;padding:20px;text-align:center;border-bottom:3px solid #D4A017;">
+    <span style="font-family:'Great Vibes',cursive;font-size:38px;color:#ffffff;padding:8px 24px;border:2px solid #D4A017;border-radius:4px;display:inline-block;">Sweet Bengal</span>
+  </td></tr>
+  <tr><td><img src="${activeBanner}" width="640" style="width:100%;max-width:640px;display:block;max-height:280px;object-fit:cover;" alt="Sweet Bengal"></td></tr>
+  <tr><td style="padding:32px 40px;color:#333;font-size:15px;line-height:1.7;">${body}</td></tr>
+  ${(t1||hasCta2)?`<tr><td style="padding:24px 40px;background:#fdf6ec;text-align:center;">${ctas}</td></tr>`:''}
+  <tr><td style="background:#2a1506;padding:20px 32px;text-align:center;color:#b89060;font-size:12px;line-height:1.8;">
+    <p style="margin:0 0 4px;color:#f0c040;font-size:14px;font-weight:700;">Sweet Bengal</p>
+    <p style="margin:0 0 4px;">By Speciality Restaurants Ltd. &nbsp;|&nbsp; +91 86556 79525</p>
+    <p style="margin:8px 0 0;font-size:11px;color:#7a5030;">
+      <a href="#" style="color:#D4A017;">Unsubscribe</a> &nbsp;|&nbsp;
+      <a href="https://sweetbengal.co.in" style="color:#D4A017;">Visit Website</a>
+    </p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+}
+
+// ─── EXPORT ────────────────────────────────────────────────────
+function copyHTML() {
+  navigator.clipboard.writeText(buildEmailHTML()).then(() => toast('HTML copied to clipboard!'));
+}
+
+function downloadHTML() {
+  const name = document.getElementById('emailerName').value.trim() || 'sweet-bengal-email';
+  const blob = new Blob([buildEmailHTML()], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name.replace(/\s+/g,'-').toLowerCase() + '.html';
+  a.click();
+  toast('Email HTML downloaded!');
+}
+
+function sendTest() {
+  const email = prompt('Enter test email address:');
+  if(email) toast('Test send feature requires backend integration. HTML copied instead!');
+  if(email) navigator.clipboard.writeText(buildEmailHTML());
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+updatePreview();
+</script>
+</body>
+</html>
